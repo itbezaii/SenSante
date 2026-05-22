@@ -16,7 +16,7 @@ matplotlib==3.10.8
 numpy==2.4.4
 openpyxl==3.1.5
 packaging==26.0
-pandas==3.0.2
+pandas==3.0.3
 pillow==12.2.0
 pydantic==2.13.4
 pydantic_core==2.46.4
@@ -26,9 +26,9 @@ scikit-learn==1.8.0
 scipy==1.17.1
 seaborn==0.13.2
 six==1.17.0
-starlette==1.0.0
+starlette==1.0.1
 threadpoolctl==3.6.0
 typing-inspection==0.4.2
 typing_extensions==4.15.0
-tzdata==2026.1
-uvicorn==0.46.0
+tzdata==2026.2
+uvicorn==0.47.0
