@@ -3,12 +3,28 @@
 
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
+from fastapi.middleware.cors import CORSMiddleware
+import joblib
+import numpy as np
 
+# --- Créer l'application ---
+app = FastAPI(
+    title="SenSante API",
+    description="Assistant pré-diagnostic médical pour le Sénégal",
+    version="0.2.0"
+)
+
+# --- CORS : autoriser les requetes depuis le frontend ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- Schemas Pydantic ---
 class PatientInput(BaseModel):
-    """Données d'entrée : les symptômes d'un patient."""
-
     age: int = Field(..., ge=0, le=120, description="Age en années")
     sexe: str = Field(..., description="Sexe : M ou F")
     temperature: float = Field(..., ge=35.0, le=42.0, description="Température en Celsius")
@@ -18,24 +34,11 @@ class PatientInput(BaseModel):
     maux_tete: bool = Field(..., description="Présence de maux de tête")
     region: str = Field(..., description="Région du Sénégal")
 
-
 class DiagnosticOutput(BaseModel):
-    """Données de sortie : le résultat du diagnostic."""
-
     diagnostic: str = Field(..., description="Diagnostic prédit")
     probabilite: float = Field(..., description="Probabilité du diagnostic")
     confiance: str = Field(..., description="Niveau de confiance")
     message: str = Field(..., description="Recommandation")
-
-# Créer l'application
-app = FastAPI(
-    title="SenSante API",
-    description="Assistant pré-diagnostic médical pour le Sénégal",
-    version="0.2.0"
-)
-
-import joblib
-import numpy as np
 
 # --- Charger le modèle et les encodeurs au démarrage ---
 print("Chargement du modèle...")
@@ -48,10 +51,9 @@ feature_cols = joblib.load("models/feature_cols.pkl")
 print(f"Modèle chargé : {type(model).__name__}")
 print(f"Classes : {list(model.classes_)}")
 
-# Route de base : vérifier que l'API fonctionne
+# --- Routes ---
 @app.get("/health")
 def health_check():
-    """Vérification de l'état de l'API."""
     return {
         "status": "ok",
         "message": "SenSante API is running"
@@ -59,11 +61,6 @@ def health_check():
 
 @app.post("/predict", response_model=DiagnosticOutput)
 def predict(patient: PatientInput):
-    """
-    Prédire un diagnostic à partir des symptômes d'un patient.
-    Reçoit les symptômes en JSON, renvoie le diagnostic,
-    la probabilité et une recommandation.
-    """
     # 1. Encoder les variables catégoriques
     try:
         sexe_enc = le_sexe.transform([patient.sexe])[0]
@@ -102,7 +99,7 @@ def predict(patient: PatientInput):
     probas = model.predict_proba(features)[0]
     proba_max = float(probas.max())
 
-    # 4. Déterminer le niveau de confiance
+    # 4. Niveau de confiance
     if proba_max >= 0.7:
         confiance = "haute"
     elif proba_max >= 0.4:
@@ -110,12 +107,12 @@ def predict(patient: PatientInput):
     else:
         confiance = "faible"
 
-    # 5. Générer la recommandation
+    # 5. Recommandation
     messages = {
-        "palu": "Suspicion de paludisme. Consultez un médecin rapidement.",
+        "palu":   "Suspicion de paludisme. Consultez un médecin rapidement.",
         "grippe": "Suspicion de grippe. Repos et hydratation recommandés.",
-        "typh": "Suspicion de typhoïde. Consultation médicale nécessaire.",
-        "sain": "Pas de pathologie détectée. Continuez à surveiller."
+        "typh":   "Suspicion de typhoïde. Consultation médicale nécessaire.",
+        "sain":   "Pas de pathologie détectée. Continuez à surveiller."
     }
 
     # 6. Renvoyer le résultat
