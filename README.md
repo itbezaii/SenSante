@@ -10,6 +10,9 @@ pinned: false
 # SenSante
 Assistant pre-diagnostic medical pour le Senegal.
 
+## Demo en ligne
+https://VOTRE_NOM-sensante.hf.space
+
 ## Description
 SenSante utilise le Machine Learning pour aider au pre-diagnostic des maladies courantes (paludisme, grippe, typhoide) a partir des symptomes du patient.
 
